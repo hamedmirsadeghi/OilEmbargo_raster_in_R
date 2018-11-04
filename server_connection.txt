@@ -1,0 +1,125 @@
+ssh -X  mpx383@login.hpc.qmul.ac.uk
+
+
+#To start an X-Windows terminal on a node #with 4 cores and 4G of RAM:
+
+
+qsh -pe smp 4 -l h_vmem=4G
+module load R gcc
+R
+
+
+
+
+
+
+###### HOW TO INSTALL THE RGDAL PACKAGE
+
+qlogin -l h_vmem=4G -pe smp 5
+module load R gcc
+
+# 1. Create dependency root directory
+mkdir ~/install
+
+# 2. Download gdal (dependency) - took a while to build
+wget http://download.osgeo.org/gdal/2.3.1/gdal231.zip
+unzip gdal231.zip
+cd gdal-2.3.1 
+./configure --prefix=/data/home/mpx383/install
+make -j $NSLOTS
+make install
+
+# 3. Download proj (dependency)
+wget http://download.osgeo.org/proj/proj-5.1.0.tar.gz
+tar -zxvf proj-5.1.0.tar.gz
+cd proj-5.1.0/
+./configure --prefix=/data/home/mpx383/install
+make -j $NSLOTS
+make install
+
+# 4. Export environment variables
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/home/mpx383/install/lib
+export PATH=$PATH:/data/home/mpx383/install/bin
+export INCLUDE=$INCLUDE:/data/home/mpx383/install/include
+
+# 5. Install rgdal
+R
+install.packages('rgdal', type="source", configure.args=c('--with-proj-include=/data/home/mpx383/install/include','--with-proj-lib=/data/home/mpx383/install/lib'))
+...
+
+
+
+###### HOW TO INSTALL THE SF PACKAGE
+
+qlogin -l h_vmem=4G -pe smp 5
+module load use.dev
+module load  gdal/2.3.1
+module load R gcc
+
+# 1. Download udunits2 (dependency)
+wget ftp://ftp.unidata.ucar.edu/pub/udunits/udunits-2.2.26.tar.gz
+tar -zxvf udunits-2.2.26.tar.gz
+cd udunits-2.2.26
+./configure --prefix=/data/home/mpx383/install
+make -j $NSLOTS
+make install
+
+# 2. Export environment variables
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/home/mpx383/install/lib
+export PATH=$PATH:/data/home/mpx383/install/bin
+export INCLUDE=$INCLUDE:/data/home/mpx383/install/include
+
+
+------------------------------------
+
+qlogin -l h_vmem=4G -pe smp 5
+module load gcc R
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/home/mpx383/install/lib
+export PATH=$PATH:/data/home/mpx383/install/bin
+export INCLUDE=$INCLUDE:/data/home/mpx383/install/include
+export UDUNITS2_LIBS=/data/home/mpx383/install/lib
+export UDUNITS2_INCLUDE=/data/home/mpx383/install/include
+
+R
+> install.packages("devtools")
+> library(devtools)
+> install.packages("udunits2", configure.args="--with-udunits2-lib=/data/home/mpx383/install/lib --with-udunits2-include=/data/home/mpx383/install/include")
+> install_github("edzer/units")
+
+
+=================================================
+qlogin -l h_vmem=12G -pe smp 17
+module load gcc R
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/home/mpx383/install/lib
+export PATH=$PATH:/data/home/mpx383/install/bin
+export INCLUDE=$INCLUDE:/data/home/mpx383/install/include
+export UDUNITS2_LIBS=/data/home/mpx383/install/lib
+export UDUNITS2_INCLUDE=/data/home/mpx383/install/include
+
+R
+
+library(devtools)
+library(udunits2)
+library(units)
+library(rgdal)
+library(raster)
+library(rgeos)
+library(sf)
+library(doParallel) 
+
+setwd('/data/home/mpx383/')
+
+================================================= run program on the background
+# first press ctrl+z
+disown -h %1
+bg 1
+logout
+=================================================
+================================================= creating a local directory from remote server
+
+sshfs -o idmap=user mpx383@login.hpc.qmul.ac.uk:/data/home/mpx383/ /home/hm/Desktop/satelite_proj/remoteserver
+
+
+
+
+
